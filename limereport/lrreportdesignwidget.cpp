@@ -544,9 +544,9 @@ void ReportDesignWidget::applyUseGrid()
 {
     int hGridStep = m_useGrid?m_horizontalGridStep:2;
     int vGridStep = m_useGrid?m_verticalGridStep:2;
-    for(int i=0;i<m_report->pageCount();++i){
-       m_report->pageAt(i)->setVerticalGridStep(hGridStep);
-       m_report->pageAt(i)->setHorizontalGridStep(vGridStep);
+    for (int i=0; i<m_report->pageCount(); ++i) {
+       m_report->pageAt(i)->setHorizontalGridStep(hGridStep);
+       m_report->pageAt(i)->setVerticalGridStep(vGridStep);
     }
 }
 
