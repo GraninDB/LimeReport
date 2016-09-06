@@ -42,59 +42,32 @@ namespace LimeReport{
 
 TextItemEditor::TextItemEditor(LimeReport::TextItem *item, LimeReport::PageDesignIntf *page, QSettings* settings, QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::TextItemEditor), m_textItem(item), m_page(page), m_settings(settings), m_ownedSettings(false), m_isReadingSetting(false)
+    ui(new Ui::TextItemEditor), m_textItem(item), m_page(page), m_settings(settings)
 {
     ui->setupUi(this);
     initUI();
     m_teContent->setPlainText(item->content());
     m_teContent->setFocus();
     setWindowIcon(QIcon(":/items/images/TextItem"));
-    readSetting();
+    readState();
+    readSettings();
 }
 
 TextItemEditor::~TextItemEditor()
 {
-#ifdef Q_OS_WIN
-    writeSetting();
-#endif
-#ifdef Q_OS_MAC
-    writeSetting();
-#endif
-    delete ui;
-}
+    writeState();
 
-void TextItemEditor::setSettings(QSettings* value)
-{
-    if (m_ownedSettings)
-        delete m_settings;
-    m_settings=value;
-    m_ownedSettings=false;
-    readSetting();
+    delete ui;
 }
 
 QSettings*TextItemEditor::settings()
 {
-    if (m_settings){
+    if (m_settings) {
         return m_settings;
     } else {
         m_settings = new QSettings("LimeReport",QApplication::applicationName());
-        m_ownedSettings = true;
         return m_settings;
     }
-}
-
-void TextItemEditor::resizeEvent(QResizeEvent*)
-{
-#ifdef Q_OS_UNIX
-    writeSetting();
-#endif
-}
-
-void TextItemEditor::moveEvent(QMoveEvent*)
-{
-#ifdef Q_OS_UNIX
-    writeSetting();
-#endif
 }
 
 void TextItemEditor::on_pbOk_clicked()
@@ -138,7 +111,6 @@ void TextItemEditor::initUI()
     }
 
     m_completer->setModel(new QStringListModel(dataWords,m_completer));
-    ui->gbSettings->setVisible(false);
 
     if (ui->twScriptEngine->selectionModel()){
         connect(ui->twScriptEngine->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
@@ -199,42 +171,43 @@ void TextItemEditor::slotFieldSelected()
     m_teContent->insertPlainText(action->whatsThis());
 }
 
-void TextItemEditor::readSetting()
+void TextItemEditor::readState()
 {
     if (settings()==0) return;
 
-    m_isReadingSetting = true;
-
     settings()->beginGroup("TextItemEditor");
     QVariant v = settings()->value("Geometry");
-    if (v.isValid()){
+    if (v.isValid()) {
         restoreGeometry(v.toByteArray());
     }
     v = settings()->value("State");
-    if (v.isValid()){
+    if (v.isValid()) {
         ui->splitter->restoreState(v.toByteArray());
     }
-
-    QVariant fontName = settings()->value("FontName");
-    if (fontName.isValid()){
-        QVariant fontSize = settings()->value("FontSize");
-        ui->textEdit->setFont(QFont(fontName.toString(),fontSize.toInt()));
-        ui->editorFont->setCurrentFont(ui->textEdit->font());
-        ui->editorFontSize->setValue(fontSize.toInt());
-    }
     settings()->endGroup();
-
-    m_isReadingSetting = false;
 }
 
-void TextItemEditor::writeSetting()
+void TextItemEditor::readSettings()
 {
-    if (settings()!=0){
-        settings()->beginGroup("TextItemEditor");
-        settings()->setValue("Geometry",saveGeometry());
-        settings()->setValue("State",ui->splitter->saveState());
-        settings()->endGroup();
+    if (settings()==0) return;
+
+    settings()->beginGroup("TextItemEditor");
+    QVariant v = settings()->value("EditorFont");
+    if (v.isValid()) {
+        QFont editorFont = v.value<QFont>();
+        ui->textEdit->setFont(editorFont);
     }
+    settings()->endGroup();
+}
+
+void TextItemEditor::writeState()
+{
+    if (settings()==0) return;
+
+    settings()->beginGroup("TextItemEditor");
+    settings()->setValue("Geometry",saveGeometry());
+    settings()->setValue("State",ui->splitter->saveState());
+    settings()->endGroup();
 }
 
 
@@ -346,41 +319,6 @@ void TextItemEditor::on_twScriptEngine_doubleClicked(const QModelIndex &index)
         m_teContent->insertPlainText(node->name()+"()");
     }
 }
-
-void TextItemEditor::on_splitter_splitterMoved(int , int )
-{
-#ifdef unix
-    writeSetting();
-#endif
-}
-
-void TextItemEditor::on_editorFont_currentFontChanged(const QFont &f)
-{
-    if (m_isReadingSetting) return;
-    QFont tmp = f;
-    tmp.setPointSize(ui->editorFontSize->value());
-    ui->textEdit->setFont(tmp);
-    settings()->beginGroup("TextItemEditor");
-    settings()->setValue("FontName",ui->textEdit->font().family());
-    settings()->setValue("FontSize",ui->editorFontSize->value());
-    settings()->endGroup();
-}
-
-void TextItemEditor::on_editorFontSize_valueChanged(int arg1)
-{
-    if (m_isReadingSetting) return;
-    ui->textEdit->setFont(QFont(ui->textEdit->font().family(),arg1));
-    settings()->beginGroup("TextItemEditor");
-    settings()->setValue("FontName",ui->textEdit->font().family());
-    settings()->setValue("FontSize",ui->editorFontSize->value());
-    settings()->endGroup();
-}
-
-void TextItemEditor::on_toolButton_clicked(bool checked)
-{
-    ui->gbSettings->setVisible(checked);
-}
-
 
 void TextItemEditor::on_twScriptEngine_activated(const QModelIndex &index)
 {

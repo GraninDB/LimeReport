@@ -78,6 +78,7 @@ ReportDesignWidget::ReportDesignWidget(ReportEnginePrivate *report, QMainWindow 
     m_zoomer = new GraphicsViewZoomer(activeView());
 #ifdef Q_OS_WIN
     m_defaultFont = QFont("Arial",10);
+    m_defaultTextEditorFont = QFont("Arial",11);
 #endif
 }
 
@@ -94,14 +95,24 @@ void ReportDesignWidget::setUseMagnet(bool useMagnet)
     }
 }
 
-void ReportDesignWidget::saveState(QSettings* settings)
+void ReportDesignWidget::setSettings(QSettings *settings)
 {
-    settings->beginGroup("DesignerWidget");
-    settings->setValue("hGridStep",m_horizontalGridStep);
-    settings->setValue("vGridStep",m_verticalGridStep);
-    settings->setValue("defaultFont",m_defaultFont);
-    settings->setValue("useGrid",m_useGrid);
-    settings->endGroup();
+    m_settings = settings;
+}
+
+void ReportDesignWidget::writeSettings()
+{
+    m_settings->beginGroup("DesignerWidget");
+    m_settings->setValue("hGridStep",m_horizontalGridStep);
+    m_settings->setValue("vGridStep",m_verticalGridStep);
+    m_settings->setValue("defaultFont",m_defaultFont);
+    m_settings->setValue("useGrid",m_useGrid);
+    m_settings->endGroup();
+
+    m_settings->beginGroup("TextItemEditor");
+    m_settings->setValue("EditorFont",m_defaultTextEditorFont);
+    m_settings->endGroup();
+
 }
 
 void ReportDesignWidget::applySettings()
@@ -112,28 +123,34 @@ void ReportDesignWidget::applySettings()
     applyUseGrid();
 }
 
-void ReportDesignWidget::loadState(QSettings* settings)
+void ReportDesignWidget::readSettings()
 {
-    settings->beginGroup("DesignerWidget");
-    QVariant v = settings->value("hGridStep");
+    m_settings->beginGroup("DesignerWidget");
+    QVariant v = m_settings->value("hGridStep");
     if (v.isValid()){
         m_horizontalGridStep = v.toInt();
     }
-
-    v = settings->value("vGridStep");
+    v = m_settings->value("vGridStep");
     if (v.isValid()){
         m_verticalGridStep = v.toInt();
     }
-    v = settings->value("defaultFont");
+    v = m_settings->value("defaultFont");
     if (v.isValid()){
         m_defaultFont = v.value<QFont>();
     }
-
-    v = settings->value("useGrid");
+    v = m_settings->value("useGrid");
     if (v.isValid()){
         m_useGrid = v.toBool();
     }
-    settings->endGroup();
+    m_settings->endGroup();
+
+    m_settings->beginGroup("TextItemEditor");
+    v = m_settings->value("EditorFont");
+    if (v.isValid()) {
+        m_defaultTextEditorFont = v.value<QFont>();
+    }
+    m_settings->endGroup();
+
     applySettings();
 }
 
@@ -505,18 +522,21 @@ void ReportDesignWidget::deleteCurrentPage()
 
 void ReportDesignWidget::editSetting()
 {
-    SettingDialog setting(this);
-    setting.setVerticalGridStep(m_verticalGridStep);
-    setting.setHorizontalGridStep(m_horizontalGridStep);
-    setting.setDefaultFont(m_defaultFont);
-    setting.setSuppressAbsentFieldsAndVarsWarnings(m_report->suppressFieldAndVarError());
+    SettingDialog settingDialog(this);
+    settingDialog.setVerticalGridStep(m_verticalGridStep);
+    settingDialog.setHorizontalGridStep(m_horizontalGridStep);
+    settingDialog.setDefaultFont(m_defaultFont);
+    settingDialog.setDefaultTextEditorFont(m_defaultTextEditorFont);
+    settingDialog.setSuppressAbsentFieldsAndVarsWarnings(m_report->suppressFieldAndVarError());
 
-    if (setting.exec()){
-        m_horizontalGridStep = setting.horizontalGridStep();
-        m_verticalGridStep = setting.verticalGridStep();
-        m_defaultFont = setting.defaultFont();
-        m_report->setSuppressFieldAndVarError(setting.suppressAbsentFieldsAndVarsWarnings());
+    if (settingDialog.exec()) {
+        m_horizontalGridStep = settingDialog.horizontalGridStep();
+        m_verticalGridStep = settingDialog.verticalGridStep();
+        m_defaultFont = settingDialog.defaultFont();
+        m_defaultTextEditorFont = settingDialog.defaultTextEditorFont();
+        m_report->setSuppressFieldAndVarError(settingDialog.suppressAbsentFieldsAndVarsWarnings());
         applySettings();
+        writeSettings();
     }
 }
 

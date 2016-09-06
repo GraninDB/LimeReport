@@ -434,7 +434,9 @@ void ReportDesignWindow::createMainMenu()
 
 void ReportDesignWindow::initReportEditor(ReportEnginePrivate* report)
 {
-    m_reportDesignWidget=new ReportDesignWidget(report,this,this);
+    m_reportDesignWidget = new ReportDesignWidget(report,this,this);
+    m_reportDesignWidget->setSettings(settings());
+    m_reportDesignWidget->readSettings();
     setCentralWidget(m_reportDesignWidget);
     connect(m_reportDesignWidget,SIGNAL(itemSelected(LimeReport::BaseDesignIntf*)),
             this,SLOT(slotItemSelected(LimeReport::BaseDesignIntf*)));
@@ -565,7 +567,7 @@ void ReportDesignWindow::writeState()
         ++it;
     }
     settings()->endGroup();
-    m_reportDesignWidget->saveState(settings());
+    //m_reportDesignWidget->saveState(settings());
 }
 
 void ReportDesignWindow::createRecentFilesMenu()
@@ -668,7 +670,7 @@ void ReportDesignWindow::restoreSetting()
     }
     settings()->endGroup();
 
-    m_reportDesignWidget->loadState(settings());
+    //m_reportDesignWidget->loadState(settings());
     m_useGridAction->setChecked(m_reportDesignWidget->useGrid());
     createRecentFilesMenu();
 }

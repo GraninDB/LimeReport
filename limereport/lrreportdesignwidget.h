@@ -81,13 +81,14 @@ public:
     QString reportFileName();
     bool isNeedToSave();
     bool emitLoadReport();
-    void saveState(QSettings *settings);
-    void loadState(QSettings *settings);
+    void writeSettings();
+    void readSettings();
     void applySettings();
     void applyUseGrid();
     bool useGrid(){ return m_useGrid;}
     bool useMagnet() const;
     void setUseMagnet(bool useMagnet);
+    void setSettings(QSettings* settings);
 
 public slots:
     void saveToFile(const QString&);
@@ -157,8 +158,10 @@ private:
     QTextEdit* m_scriptEditor;
     QMainWindow *m_mainWindow;
     QTabWidget* m_tabWidget;
+    QSettings* m_settings;
     GraphicsViewZoomer* m_zoomer;
     QFont m_defaultFont;
+    QFont m_defaultTextEditorFont;
     int m_verticalGridStep;
     int m_horizontalGridStep;
     bool m_useGrid;

@@ -32,6 +32,13 @@ QFont SettingDialog::defaultFont()
     return result;
 }
 
+QFont SettingDialog::defaultTextEditorFont()
+{
+    QFont result = ui->editorFont->currentFont();
+    result.setPointSize(ui->editorFontSize->value());
+    return result;
+}
+
 bool SettingDialog::suppressAbsentFieldsAndVarsWarnings()
 {
     return ui->cbSuppressWarnings->isChecked();
@@ -55,6 +62,12 @@ void SettingDialog::setDefaultFont(const QFont &value)
 {
     ui->defaultFont->setCurrentFont(value);
     ui->defaultFontSize->setValue(value.pointSize());
+}
+
+void SettingDialog::setDefaultTextEditorFont(const QFont &value)
+{
+    ui->editorFont->setCurrentFont(value);
+    ui->editorFontSize->setValue(value.pointSize());
 }
 
 } // namespace LimeReport
